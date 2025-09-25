@@ -3,6 +3,11 @@ import pandas as pd
 from datetime import datetime, timedelta
 from crewai.tools import tool
 import json
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class ZerodhaKiteAPI:
     """
@@ -189,20 +194,29 @@ def transform_zerodha_quote_data(quote_data):
     return transformed_data
 
 @tool("Zerodha Live Stock Information Tool")
-def get_zerodha_stock_data(instrument_token: str, api_key: str, access_token: str = None):
+def get_zerodha_stock_data(instrument_token: str, api_key: str = None, access_token: str = None):
     """
     💡 Retrieves comprehensive stock information using Zerodha Kite Connect API.
     
     Parameters:
         instrument_token (str): Zerodha instrument token (e.g., "NSE:RELIANCE", "BSE:500325")
-        api_key (str): Your Zerodha Kite Connect API key
-        access_token (str): User's access token (optional for quote data)
+        api_key (str): Your Zerodha Kite Connect API key (optional, will use env var if not provided)
+        access_token (str): User's access token (optional for quote data, will use env var if not provided)
     
     Returns:
         str: A comprehensive summary of stock data from Zerodha
     """
     
     try:
+        # Use environment variables if not provided
+        if not api_key:
+            api_key = os.getenv("ZERODHA_API_KEY")
+        if not access_token:
+            access_token = os.getenv("ZERODHA_ACCESS_TOKEN")
+        
+        if not api_key:
+            return "Error: ZERODHA_API_KEY not found. Please provide api_key parameter or set ZERODHA_API_KEY environment variable."
+        
         # Initialize Zerodha API client
         kite = ZerodhaKiteAPI(api_key, access_token)
         
@@ -262,24 +276,35 @@ def get_zerodha_stock_data(instrument_token: str, api_key: str, access_token: st
         return f"Error processing Zerodha data: {str(e)}"
 
 @tool("Zerodha Historical Data Tool")
-def get_zerodha_historical_data(instrument_token: str, api_key: str, access_token: str, 
-                               from_date: str, to_date: str, interval: str = "day"):
+def get_zerodha_historical_data(instrument_token: str, from_date: str, to_date: str, 
+                               interval: str = "day", api_key: str = None, access_token: str = None):
     """
     💡 Retrieves historical candle data using Zerodha Kite Connect API.
     
     Parameters:
         instrument_token (str): Zerodha instrument token
-        api_key (str): Your Zerodha Kite Connect API key
-        access_token (str): User's access token
         from_date (str): Start date in YYYY-MM-DD format
         to_date (str): End date in YYYY-MM-DD format
         interval (str): Data interval (minute, 3minute, 5minute, 15minute, 30minute, 60minute, day)
+        api_key (str): Your Zerodha Kite Connect API key (optional, will use env var if not provided)
+        access_token (str): User's access token (optional, will use env var if not provided)
     
     Returns:
         str: Historical data analysis and trends
     """
     
     try:
+        # Use environment variables if not provided
+        if not api_key:
+            api_key = os.getenv("ZERODHA_API_KEY")
+        if not access_token:
+            access_token = os.getenv("ZERODHA_ACCESS_TOKEN")
+        
+        if not api_key:
+            return "Error: ZERODHA_API_KEY not found. Please provide api_key parameter or set ZERODHA_API_KEY environment variable."
+        if not access_token:
+            return "Error: ZERODHA_ACCESS_TOKEN not found. Please provide access_token parameter or set ZERODHA_ACCESS_TOKEN environment variable."
+        
         # Initialize Zerodha API client
         kite = ZerodhaKiteAPI(api_key, access_token)
         
@@ -360,19 +385,30 @@ def get_zerodha_historical_data(instrument_token: str, api_key: str, access_toke
         return f"Error processing historical data: {str(e)}"
 
 @tool("Zerodha Portfolio Information Tool")
-def get_zerodha_portfolio_info(api_key: str, access_token: str):
+def get_zerodha_portfolio_info(api_key: str = None, access_token: str = None):
     """
     💡 Retrieves user's portfolio information using Zerodha Kite Connect API.
     
     Parameters:
-        api_key (str): Your Zerodha Kite Connect API key
-        access_token (str): User's access token
+        api_key (str): Your Zerodha Kite Connect API key (optional, will use env var if not provided)
+        access_token (str): User's access token (optional, will use env var if not provided)
     
     Returns:
         str: Portfolio summary and holdings information
     """
     
     try:
+        # Use environment variables if not provided
+        if not api_key:
+            api_key = os.getenv("ZERODHA_API_KEY")
+        if not access_token:
+            access_token = os.getenv("ZERODHA_ACCESS_TOKEN")
+        
+        if not api_key:
+            return "Error: ZERODHA_API_KEY not found. Please provide api_key parameter or set ZERODHA_API_KEY environment variable."
+        if not access_token:
+            return "Error: ZERODHA_ACCESS_TOKEN not found. Please provide access_token parameter or set ZERODHA_ACCESS_TOKEN environment variable."
+        
         # Initialize Zerodha API client
         kite = ZerodhaKiteAPI(api_key, access_token)
         
@@ -438,10 +474,47 @@ def format_number(num):
 
 # Example usage and testing
 if __name__ == "__main__":
-    # Example usage - replace with your actual API credentials
-    API_KEY = "your_api_key_here"
-    ACCESS_TOKEN = "your_access_token_here"
+    # Get API credentials from environment variables
+    API_KEY = os.getenv("ZERODHA_API_KEY")
+    ACCESS_TOKEN = os.getenv("ZERODHA_ACCESS_TOKEN")
+    
+    if not API_KEY:
+        print("❌ ZERODHA_API_KEY not found in environment variables")
+        print("Please add your Zerodha API key to .env file:")
+        print("ZERODHA_API_KEY=your_api_key_here")
+        print("ZERODHA_ACCESS_TOKEN=your_access_token_here")
+        exit(1)
+    
+    print("🚀 Testing Zerodha Kite Connect API Integration\n")
     
     # Test with a popular Indian stock
-    result = get_zerodha_stock_data("NSE:RELIANCE", API_KEY, ACCESS_TOKEN)
+    print("📊 Testing Real-time Stock Data:")
+    result = get_zerodha_stock_data.func("NSE:RELIANCE", API_KEY, ACCESS_TOKEN)
     print(result)
+    
+    # Test historical data if access token is available
+    if ACCESS_TOKEN:
+        print("\n📈 Testing Historical Data:")
+        from datetime import datetime, timedelta
+        
+        # Get data for last 7 days
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        
+        historical_result = get_zerodha_historical_data.func(
+            "NSE:RELIANCE", 
+            start_date, 
+            end_date, 
+            "day",
+            API_KEY, 
+            ACCESS_TOKEN
+        )
+        print(historical_result)
+        
+        print("\n💼 Testing Portfolio Information:")
+        portfolio_result = get_zerodha_portfolio_info.func(API_KEY, ACCESS_TOKEN)
+        print(portfolio_result)
+    else:
+        print("\n⚠️  ACCESS_TOKEN not found. Historical data and portfolio features require authentication.")
+        print("Please add your Zerodha access token to .env file:")
+        print("ZERODHA_ACCESS_TOKEN=your_access_token_here")
