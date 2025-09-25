@@ -9,4 +9,6 @@ def run(stock: str):
 
 if __name__  == "__main__":
     # run("TATAMOTORS.NS")
-    run("BANKNIFTY1.NS")
+    # run("BANKNIFTY1.NS")
+
+    run("^NSEBANK")
