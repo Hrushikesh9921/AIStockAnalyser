@@ -4,3 +4,4 @@ python-dotenv
 yfinance
 requests
 pandas
+flask

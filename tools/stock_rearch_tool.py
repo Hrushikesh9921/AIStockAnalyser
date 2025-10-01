@@ -40,6 +40,10 @@ def transform_stock_data(info):
         "bid_size": info.get("bidSize"),
         "ask_size": info.get("askSize"),
         
+        # Additional Market Data
+        "spread": (info.get("ask", 0) - info.get("bid", 0)) if info.get("ask") and info.get("bid") else 0,
+        "spread_percent": ((info.get("ask", 0) - info.get("bid", 0)) / info.get("regularMarketPrice", 1) * 100) if info.get("regularMarketPrice") else 0,
+        
         # Market Cap and Shares
         "market_cap": info.get("marketCap"),
         "float_shares": info.get("floatShares"),
@@ -59,7 +63,14 @@ def transform_stock_data(info):
         "target_mean_price": info.get("targetMeanPrice"),
         "target_median_price": info.get("targetMedianPrice"),
         "recommendation_mean": info.get("recommendationMean"),
-        
+
+        # Market Context and Volatility
+        "daily_range": (info.get("dayHigh", 0) - info.get("dayLow", 0)) if info.get("dayHigh") and info.get("dayLow") else 0,
+        "daily_range_percent": ((info.get("dayHigh", 0) - info.get("dayLow", 0)) / info.get("regularMarketPrice", 1) * 100) if info.get("regularMarketPrice") else 0,
+        "price_vs_52w_high": ((info.get("regularMarketPrice", 0) - info.get("fiftyTwoWeekLow", 0)) / (info.get("fiftyTwoWeekHigh", 1) - info.get("fiftyTwoWeekLow", 0)) * 100) if info.get("fiftyTwoWeekHigh") and info.get("fiftyTwoWeekLow") else 0,
+        "price_vs_50day_avg": ((info.get("regularMarketPrice", 0) - info.get("fiftyDayAverage", 0)) / info.get("fiftyDayAverage", 1) * 100) if info.get("fiftyDayAverage") else 0,
+        "price_vs_200day_avg": ((info.get("regularMarketPrice", 0) - info.get("twoHundredDayAverage", 0)) / info.get("twoHundredDayAverage", 1) * 100) if info.get("twoHundredDayAverage") else 0,
+
         # Currency
         "currency": info.get("currency", "INR")
     }
@@ -103,6 +114,8 @@ def get_stock_price(stock_symbol: str):
     ask = transformed_data["ask"]
     bid_size = transformed_data["bid_size"]
     ask_size = transformed_data["ask_size"]
+    spread = transformed_data["spread"]
+    spread_percent = transformed_data["spread_percent"]
     market_cap = transformed_data["market_cap"]
     float_shares = transformed_data["float_shares"]
     shares_outstanding = transformed_data["shares_outstanding"]
@@ -118,6 +131,13 @@ def get_stock_price(stock_symbol: str):
     target_mean_price = transformed_data["target_mean_price"]
     target_median_price = transformed_data["target_median_price"]
     recommendation_mean = transformed_data["recommendation_mean"]
+    
+    # New realistic indicators
+    daily_range = transformed_data["daily_range"]
+    daily_range_percent = transformed_data["daily_range_percent"]
+    price_vs_52w_high = transformed_data["price_vs_52w_high"]
+    price_vs_50day_avg = transformed_data["price_vs_50day_avg"]
+    price_vs_200day_avg = transformed_data["price_vs_200day_avg"]
     
     # Additional data for change calculations
     change = info.get("regularMarketChange")
@@ -164,11 +184,12 @@ def get_stock_price(stock_symbol: str):
         f"• Average Volume (10 days): {format_number(average_volume_10days)}\n"
         f"• Average Daily Volume (3 months): {format_number(average_daily_volume_3month)}\n\n"
         
-        f"💰 BID/ASK INFORMATION:\n"
-        f"• Bid: {bid} {currency}\n"
-        f"• Ask: {ask} {currency}\n"
-        f"• Bid Size: {bid_size}\n"
-        f"• Ask Size: {ask_size}\n\n"
+            f"💰 BID/ASK INFORMATION:\n"
+            f"• Bid: {bid} {currency}\n"
+            f"• Ask: {ask} {currency}\n"
+            f"• Bid Size: {bid_size}\n"
+            f"• Ask Size: {ask_size}\n"
+            f"• Spread: {spread:.2f} {currency} ({spread_percent:.3f}%)\n\n"
         
         f"🏢 MARKET CAP & SHARES:\n"
         f"• Market Cap: {format_number(market_cap)} {currency}\n"
@@ -183,14 +204,23 @@ def get_stock_price(stock_symbol: str):
         f"• 50-Day Average: {fifty_day_average} {currency}\n"
         f"• 200-Day Average: {two_hundred_day_average} {currency}\n\n"
         
-        f"🎯 ANALYST TARGETS:\n"
-        f"• Target High Price: {target_high_price} {currency}\n"
-        f"• Target Low Price: {target_low_price} {currency}\n"
-        f"• Target Mean Price: {target_mean_price} {currency}\n"
-        f"• Target Median Price: {target_median_price} {currency}\n"
-        f"• Recommendation Mean: {recommendation_mean}\n\n"
-        
-        f"💱 Currency: {currency}\n"
+            f"🎯 ANALYST TARGETS:\n"
+            f"• Target High Price: {target_high_price} {currency}\n"
+            f"• Target Low Price: {target_low_price} {currency}\n"
+            f"• Target Mean Price: {target_mean_price} {currency}\n"
+            f"• Target Median Price: {target_median_price} {currency}\n"
+            f"• Recommendation Mean: {recommendation_mean}\n\n"
+
+            f"📊 REALISTIC MARKET INDICATORS:\n"
+            f"• Daily Range: {daily_range:.2f} {currency} ({daily_range_percent:.2f}%)\n"
+            f"• Price vs 52W High: {price_vs_52w_high:.1f}% (0%=Low, 100%=High)\n"
+            f"• Price vs 50-Day Avg: {price_vs_50day_avg:.2f}%\n"
+            f"• Price vs 200-Day Avg: {price_vs_200day_avg:.2f}%\n"
+            f"• Typical Daily Movement: 1-3% (Large Cap Stock)\n"
+            f"• Realistic Intraday Target: ±0.5-1.5%\n"
+            f"• Realistic Swing Target: ±2-5%\n\n"
+
+            f"💱 Currency: {currency}\n"
     )
 
 
