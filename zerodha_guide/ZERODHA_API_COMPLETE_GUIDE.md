@@ -868,6 +868,185 @@ print(f"Instrument key: {key}")  # NSE:RELIANCE
 
 ---
 
+## 🔧 Debug Tools & Troubleshooting
+
+### Debug Tools Overview
+
+This guide includes comprehensive debug tools to help you troubleshoot and understand the Zerodha API:
+
+#### 1. `debug_api.py` - API Diagnostic Tool
+
+**Purpose:** Comprehensive API debugging and diagnostics
+
+**Features:**
+- Environment variable validation
+- API credential verification
+- Network connectivity testing
+- Response structure analysis
+- Detailed error reporting
+
+**Usage:**
+```bash
+python debug_api.py
+```
+
+**When to use:**
+- First time API setup
+- Authentication issues
+- Network connectivity problems
+- API response errors
+
+**Example Output:**
+```
+🔍 DEBUGGING ZERODHA API SETUP
+1️⃣ Environment Variables:
+ZERODHA_API_KEY: ✅ Set
+ZERODHA_ACCESS_TOKEN: ✅ Set
+
+2️⃣ .env File Check:
+✅ .env file exists
+✅ ZERODHA_API_KEY found in .env
+
+3️⃣ API Response Debug:
+✅ Profile API call successful
+📋 Full API Response:
+{
+  "status": "success",
+  "data": {
+    "user_name": "Your Name",
+    "email": "your@email.com"
+  }
+}
+```
+
+#### 2. `debug_responses.py` - Response Structure Analyzer
+
+**Purpose:** Analyze and understand API response structures
+
+**Features:**
+- Response type analysis
+- Content structure inspection
+- Data format understanding
+- Response validation
+
+**Usage:**
+```bash
+python debug_responses.py
+```
+
+**When to use:**
+- Understanding API response formats
+- Debugging data parsing issues
+- Development and testing
+- Response structure analysis
+
+**Example Output:**
+```
+🔍 DEBUGGING ZERODHA API RESPONSE STRUCTURES
+1️⃣ QUOTES API RESPONSE:
+Type: <class 'dict'>
+Content: {'status': 'success', 'data': {'NSE:RELIANCE': {...}}}
+
+2️⃣ PORTFOLIO API RESPONSE:
+Type: <class 'dict'>
+Content: {'status': 'success', 'data': [...]}
+```
+
+### Common Issues & Solutions
+
+#### Issue 1: Authentication Errors
+```bash
+# Run debug tool
+python debug_api.py
+
+# Check output for:
+❌ ZERODHA_API_KEY: Not Set
+❌ ZERODHA_ACCESS_TOKEN: Not Set
+```
+
+**Solution:**
+1. Create `.env` file with your credentials
+2. Ensure environment variables are set correctly
+3. Verify API key and access token are valid
+
+#### Issue 2: Response Parsing Errors
+```bash
+# Run response analyzer
+python debug_responses.py
+
+# Check response structure
+Type: <class 'dict'>
+Content: {'status': 'success', 'data': [...]}
+```
+
+**Solution:**
+1. Access data using `response['data']` instead of `response` directly
+2. Check for `status` field before processing data
+3. Handle empty data arrays gracefully
+
+#### Issue 3: Network Connectivity Issues
+```bash
+# Run debug tool
+python debug_api.py
+
+# Check network section
+❌ Network test failed: Connection timeout
+```
+
+**Solution:**
+1. Check internet connection
+2. Verify Zerodha server status
+3. Check firewall settings
+4. Try again during market hours
+
+### Debug Workflow
+
+#### Step 1: Initial Setup
+```bash
+# Check environment setup
+python debug_api.py
+```
+
+#### Step 2: Understand Response Format
+```bash
+# Analyze API responses
+python debug_responses.py
+```
+
+#### Step 3: Test with Examples
+```bash
+# Run practical examples
+python example_usage.py
+```
+
+#### Step 4: Use in Production
+```python
+from zerodha_api_complete import ZerodhaAPI
+
+# Initialize and use
+api = ZerodhaAPI()
+quotes = api.get_quotes(["NSE:RELIANCE"])
+```
+
+### Debug Tool Features Comparison
+
+| Feature | debug_api.py | debug_responses.py |
+|---------|--------------|-------------------|
+| **Environment Check** | ✅ | ❌ |
+| **Network Testing** | ✅ | ❌ |
+| **Response Analysis** | ✅ | ✅ |
+| **Error Diagnosis** | ✅ | ❌ |
+| **Data Structure** | ❌ | ✅ |
+| **Format Understanding** | ❌ | ✅ |
+
+### Best Practices
+
+1. **Always run debug tools first** when setting up API
+2. **Use debug_responses.py** to understand data structures
+3. **Check debug_api.py output** for authentication issues
+4. **Run examples** to test your implementation
+5. **Handle errors gracefully** in production code
+
 ## 📞 Support & Resources
 
 ### Official Documentation:

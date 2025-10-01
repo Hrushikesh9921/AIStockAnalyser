@@ -37,17 +37,29 @@ def main():
         # Get user profile
         print("\n3️⃣ Getting User Profile...")
         profile = api.get_profile()
-        print(f"User: {profile['user_name']}")
-        print(f"Email: {profile['email']}")
-        print(f"Broker: {profile['broker']}")
+        if profile.get('status') == 'success' and 'data' in profile:
+            profile_data = profile['data']
+            print(f"User: {profile_data['user_name']}")
+            print(f"Email: {profile_data['email']}")
+            print(f"Broker: {profile_data['broker']}")
+            print(f"User ID: {profile_data['user_id']}")
+            print(f"Exchanges: {', '.join(profile_data['exchanges'])}")
+        else:
+            print(f"❌ Profile fetch failed: {profile}")
         
         # Get margins
         print("\n4️⃣ Getting Margins...")
         margins = api.get_margins()
-        if 'equity' in margins:
-            equity = margins['equity']
-            print(f"Equity Net: ₹{equity['net']:,.2f}")
-            print(f"Available Cash: ₹{equity['available']['cash']:,.2f}")
+        if margins.get('status') == 'success' and 'data' in margins:
+            margins_data = margins['data']
+            if 'equity' in margins_data:
+                equity = margins_data['equity']
+                print(f"Equity Net: ₹{equity['net']:,.2f}")
+                print(f"Available Cash: ₹{equity['available']['cash']:,.2f}")
+            else:
+                print("No equity margins found")
+        else:
+            print(f"❌ Margins fetch failed: {margins}")
         
         # Get live quotes for popular stocks
         print("\n5️⃣ Getting Live Quotes...")
@@ -65,11 +77,18 @@ def main():
         print(f"{'Stock':<15} {'Price':<10} {'Change':<10} {'Change%':<10}")
         print("-" * 60)
         
-        for symbol, data in quotes.items():
-            if "error" not in data:
-                change = data.get('net_change', 0)
-                change_pct = (change / data.get('last_price', 1)) * 100 if data.get('last_price', 0) > 0 else 0
-                print(f"{symbol:<15} ₹{data['last_price']:<9.2f} {change:+.2f}     {change_pct:+.2f}%")
+        if isinstance(quotes, dict) and quotes.get('status') == 'success' and 'data' in quotes:
+            quotes_data = quotes['data']
+            for symbol, data in quotes_data.items():
+                if isinstance(data, dict) and "error" not in data:
+                    change = data.get('net_change', 0)
+                    last_price = data.get('last_price', 0)
+                    change_pct = (change / last_price) * 100 if last_price > 0 else 0
+                    print(f"{symbol:<15} ₹{last_price:<9.2f} {change:+.2f}     {change_pct:+.2f}%")
+                else:
+                    print(f"{symbol:<15} Error: {data}")
+        else:
+            print("❌ Quotes API returned unexpected format")
         
         # Get historical data for RELIANCE
         print("\n6️⃣ Getting Historical Data for RELIANCE...")
@@ -89,37 +108,51 @@ def main():
                 interval="day"
             )
             
-            if historical:
+            if historical and isinstance(historical, list) and len(historical) > 0:
                 print(f"📈 Historical Data Points: {len(historical)}")
                 latest = historical[-1]
-                print(f"Latest Close: ₹{latest['close']:.2f}")
-                print(f"Date: {latest['date']}")
-                
-                # Calculate 30-day return
-                if len(historical) > 1:
-                    first_price = historical[0]['close']
-                    last_price = historical[-1]['close']
-                    return_pct = ((last_price - first_price) / first_price) * 100
-                    print(f"30-Day Return: {return_pct:+.2f}%")
+                if isinstance(latest, dict):
+                    print(f"Latest Close: ₹{latest.get('close', 0):.2f}")
+                    print(f"Date: {latest.get('date', 'N/A')}")
+                    
+                    # Calculate 30-day return
+                    if len(historical) > 1:
+                        first_candle = historical[0]
+                        if isinstance(first_candle, dict):
+                            first_price = first_candle.get('close', 0)
+                            last_price = latest.get('close', 0)
+                            if first_price > 0:
+                                return_pct = ((last_price - first_price) / first_price) * 100
+                                print(f"30-Day Return: {return_pct:+.2f}%")
+            else:
+                print("📈 No historical data available (market may be closed)")
         except Exception as e:
             print(f"⚠️ Historical data error: {e}")
+            print("💡 This is normal when market is closed or for new instruments")
         
         # Get portfolio
         print("\n7️⃣ Getting Portfolio...")
         try:
             portfolio = api.get_portfolio()
-            if portfolio:
-                print(f"📊 Portfolio Holdings: {len(portfolio)}")
-                print("\nTop Holdings:")
-                print("-" * 50)
-                print(f"{'Symbol':<12} {'Qty':<8} {'Avg Price':<12} {'Current':<12} {'P&L':<12}")
-                print("-" * 50)
-                
-                for holding in portfolio[:5]:  # Show top 5
-                    pnl = holding.get('pnl', 0)
-                    print(f"{holding['tradingsymbol']:<12} {holding['quantity']:<8} "
-                          f"₹{holding['average_price']:<11.2f} ₹{holding['last_price']:<11.2f} "
-                          f"₹{pnl:<11.2f}")
+            if portfolio and portfolio.get('status') == 'success' and 'data' in portfolio:
+                portfolio_data = portfolio['data']
+                if isinstance(portfolio_data, list):
+                    print(f"📊 Portfolio Holdings: {len(portfolio_data)}")
+                    print("\nTop Holdings:")
+                    print("-" * 50)
+                    print(f"{'Symbol':<12} {'Qty':<8} {'Avg Price':<12} {'Current':<12} {'P&L':<12}")
+                    print("-" * 50)
+                    
+                    # Show top 5 holdings safely
+                    top_holdings = portfolio_data[:5] if len(portfolio_data) >= 5 else portfolio_data
+                    for holding in top_holdings:
+                        if isinstance(holding, dict):
+                            pnl = holding.get('pnl', 0)
+                            print(f"{holding.get('tradingsymbol', 'N/A'):<12} {holding.get('quantity', 0):<8} "
+                                  f"₹{holding.get('average_price', 0):<11.2f} ₹{holding.get('last_price', 0):<11.2f} "
+                                  f"₹{pnl:<11.2f}")
+                else:
+                    print("📊 No holdings found in portfolio")
             else:
                 print("📊 No holdings found in portfolio")
         except Exception as e:
@@ -129,16 +162,23 @@ def main():
         print("\n8️⃣ Getting Positions...")
         try:
             positions = api.get_positions()
-            day_positions = positions.get('day', [])
-            net_positions = positions.get('net', [])
-            
-            print(f"Day Positions: {len(day_positions)}")
-            print(f"Net Positions: {len(net_positions)}")
-            
-            if day_positions:
-                print("\nDay Positions:")
-                for pos in day_positions[:3]:  # Show first 3
-                    print(f"  {pos['tradingsymbol']}: {pos['quantity']} @ ₹{pos['average_price']:.2f}")
+            if isinstance(positions, dict) and positions.get('status') == 'success' and 'data' in positions:
+                positions_data = positions['data']
+                day_positions = positions_data.get('day', [])
+                net_positions = positions_data.get('net', [])
+                
+                print(f"Day Positions: {len(day_positions)}")
+                print(f"Net Positions: {len(net_positions)}")
+                
+                if day_positions and isinstance(day_positions, list):
+                    print("\nDay Positions:")
+                    # Show first 3 positions safely
+                    top_positions = day_positions[:3] if len(day_positions) >= 3 else day_positions
+                    for pos in top_positions:
+                        if isinstance(pos, dict):
+                            print(f"  {pos.get('tradingsymbol', 'N/A')}: {pos.get('quantity', 0)} @ ₹{pos.get('average_price', 0):.2f}")
+            else:
+                print("❌ Positions API returned unexpected format")
         except Exception as e:
             print(f"⚠️ Positions error: {e}")
         
@@ -146,20 +186,30 @@ def main():
         print("\n9️⃣ Getting Orders...")
         try:
             orders = api.get_orders()
-            print(f"📋 Total Orders: {len(orders)}")
-            
-            if orders:
-                # Show recent orders
-                recent_orders = orders[:3]  # Show first 3
-                print("\nRecent Orders:")
-                print("-" * 80)
-                print(f"{'Order ID':<15} {'Symbol':<12} {'Type':<6} {'Qty':<6} {'Status':<12} {'Price':<10}")
-                print("-" * 80)
-                
-                for order in recent_orders:
-                    print(f"{order['order_id']:<15} {order['tradingsymbol']:<12} "
-                          f"{order['transaction_type']:<6} {order['quantity']:<6} "
-                          f"{order['status']:<12} ₹{order['average_price']:<9.2f}")
+            if isinstance(orders, dict) and orders.get('status') == 'success' and 'data' in orders:
+                orders_data = orders['data']
+                if isinstance(orders_data, list):
+                    print(f"📋 Total Orders: {len(orders_data)}")
+                    
+                    if orders_data:
+                        # Show recent orders safely
+                        recent_orders = orders_data[:3] if len(orders_data) >= 3 else orders_data
+                        print("\nRecent Orders:")
+                        print("-" * 80)
+                        print(f"{'Order ID':<15} {'Symbol':<12} {'Type':<6} {'Qty':<6} {'Status':<12} {'Price':<10}")
+                        print("-" * 80)
+                        
+                        for order in recent_orders:
+                            if isinstance(order, dict):
+                                print(f"{order.get('order_id', 'N/A'):<15} {order.get('tradingsymbol', 'N/A'):<12} "
+                                      f"{order.get('transaction_type', 'N/A'):<6} {order.get('quantity', 0):<6} "
+                                      f"{order.get('status', 'N/A'):<12} ₹{order.get('average_price', 0):<9.2f}")
+                    else:
+                        print("📋 No orders found")
+                else:
+                    print("📋 No orders found")
+            else:
+                print("❌ Orders API returned unexpected format")
         except Exception as e:
             print(f"⚠️ Orders error: {e}")
         
@@ -167,11 +217,24 @@ def main():
         print("\n🔟 Getting GTT Orders...")
         try:
             gtt_orders = api.get_gtt()
-            print(f"⏰ GTT Orders: {len(gtt_orders)}")
-            
-            if gtt_orders:
-                for gtt in gtt_orders[:2]:  # Show first 2
-                    print(f"  GTT {gtt['id']}: {gtt['condition']['tradingsymbol']} - {gtt['status']}")
+            if isinstance(gtt_orders, dict) and gtt_orders.get('status') == 'success' and 'data' in gtt_orders:
+                gtt_data = gtt_orders['data']
+                if isinstance(gtt_data, list):
+                    print(f"⏰ GTT Orders: {len(gtt_data)}")
+                    
+                    if gtt_data:
+                        # Show first 2 GTT orders safely
+                        top_gtt = gtt_data[:2] if len(gtt_data) >= 2 else gtt_data
+                        for gtt in top_gtt:
+                            if isinstance(gtt, dict):
+                                condition = gtt.get('condition', {})
+                                print(f"  GTT {gtt.get('id', 'N/A')}: {condition.get('tradingsymbol', 'N/A')} - {gtt.get('status', 'N/A')}")
+                    else:
+                        print("⏰ No GTT orders found")
+                else:
+                    print("⏰ No GTT orders found")
+            else:
+                print("❌ GTT orders API returned unexpected format")
         except Exception as e:
             print(f"⚠️ GTT orders error: {e}")
         
@@ -179,11 +242,23 @@ def main():
         print("\n1️⃣1️⃣ Getting Mutual Fund Holdings...")
         try:
             mf_holdings = api.get_mf_holdings()
-            print(f"💼 MF Holdings: {len(mf_holdings)}")
-            
-            if mf_holdings:
-                for mf in mf_holdings[:3]:  # Show first 3
-                    print(f"  {mf['tradingsymbol']}: {mf['quantity']} units @ ₹{mf['average_price']:.2f}")
+            if isinstance(mf_holdings, dict) and mf_holdings.get('status') == 'success' and 'data' in mf_holdings:
+                mf_data = mf_holdings['data']
+                if isinstance(mf_data, list):
+                    print(f"💼 MF Holdings: {len(mf_data)}")
+                    
+                    if mf_data:
+                        # Show first 3 MF holdings safely
+                        top_mf = mf_data[:3] if len(mf_data) >= 3 else mf_data
+                        for mf in top_mf:
+                            if isinstance(mf, dict):
+                                print(f"  {mf.get('tradingsymbol', 'N/A')}: {mf.get('quantity', 0)} units @ ₹{mf.get('average_price', 0):.2f}")
+                    else:
+                        print("💼 No MF holdings found")
+                else:
+                    print("💼 No MF holdings found")
+            else:
+                print("❌ MF holdings API returned unexpected format")
         except Exception as e:
             print(f"⚠️ MF holdings error: {e}")
         

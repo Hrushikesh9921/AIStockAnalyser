@@ -9,7 +9,9 @@ This folder contains a comprehensive guide and implementation for the Zerodha Ki
 1. **`zerodha_api_complete.py`** - Complete standalone Python implementation
 2. **`ZERODHA_API_COMPLETE_GUIDE.md`** - Detailed documentation with all endpoints
 3. **`example_usage.py`** - Practical examples and demonstrations
-4. **`README.md`** - This file
+4. **`debug_api.py`** - Comprehensive API debugging and diagnostic tool
+5. **`debug_responses.py`** - API response structure analyzer
+6. **`README.md`** - This file
 
 ## 🚀 Quick Start
 
@@ -61,6 +63,19 @@ print(portfolio)
 - **File**: `example_usage.py`
 - **Content**: Real-world usage examples
 - **Features**: Market data, portfolio, orders, error handling
+
+### Debug Tools
+- **File**: `debug_api.py`
+- **Content**: Comprehensive API debugging and diagnostics
+- **Features**: Environment validation, network testing, error analysis
+
+- **File**: `debug_responses.py`
+- **Content**: API response structure analyzer
+- **Features**: Response format analysis, data structure inspection
+
+- **File**: `DEBUG_TOOLS_GUIDE.md`
+- **Content**: Complete guide to using debug tools
+- **Features**: Troubleshooting, best practices, common issues
 
 ## 🔧 Features Covered
 
@@ -127,6 +142,41 @@ historical = api.get_historical_data(
     to_date="2024-01-31",
     interval="day"
 )
+```
+
+## 🔧 Debug Tools Usage
+
+### API Debugging
+```bash
+# Diagnose API issues
+python debug_api.py
+
+# Analyze response structures
+python debug_responses.py
+
+# Test with examples
+python example_usage.py
+```
+
+### Debug Tool Features
+- **Environment Validation**: Check API credentials and setup
+- **Network Testing**: Verify connectivity to Zerodha servers
+- **Response Analysis**: Understand API response structures
+- **Error Diagnosis**: Detailed error reporting and troubleshooting
+
+### Quick Debug Reference
+```bash
+# First time setup - check everything
+python debug_api.py
+
+# Understand response formats
+python debug_responses.py
+
+# Test with examples
+python example_usage.py
+
+# Read complete debug guide
+cat DEBUG_TOOLS_GUIDE.md
 ```
 
 ### Portfolio Operations
